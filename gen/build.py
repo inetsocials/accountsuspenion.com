@@ -850,15 +850,13 @@ RewriteCond %{{HTTP_HOST}} (^|\\.){host_re}$ [NC]
 RewriteRule ^(.*)$ https://{host}/$1 [R=301,L]
 
 # 2. Old CMS paths (legacy WordPress)
-# /page.html, /page.htm, /page.php and /page/index.html -> /page/ when that page exists
-# (index rules only fire on what the visitor typed, never on DirectoryIndex sub-requests, so no loop)
-RewriteCond %{{THE_REQUEST}} \\s/+index\\.(html?|php)[\\s?] [NC]
-RewriteRule ^index\\.(html?|php)$ / [R=301,L,NC]
-RewriteCond %{{THE_REQUEST}} \\s/+(.+/)index\\.(html?|php)[\\s?] [NC]
-RewriteRule ^(.+)/index\\.(html?|php)$ /$1/ [R=301,L,NC]
-RewriteCond %{{REQUEST_FILENAME}} !-f
-RewriteCond %{{DOCUMENT_ROOT}}/$1/index.html -f
-RewriteRule ^(.+?)\\.(html?|php)$ /$1/ [R=301,L,NC]
+# /page.html, /page.htm, /page.php -> /page/ when that page exists.
+# Matches only the URL the visitor typed (THE_REQUEST), so DirectoryIndex and internal
+# rewrites can never trigger it again (no redirect loop on LiteSpeed).
+RewriteCond %{{THE_REQUEST}} !/index\\.(html?|php)[\\s?] [NC]
+RewriteCond %{{THE_REQUEST}} \\s/+([a-z0-9][a-z0-9/-]*?)\\.(html?|php)[\\s?] [NC]
+RewriteCond %{{DOCUMENT_ROOT}}/%1/index.html -f
+RewriteRule \\.(html?|php)$ /%1/ [R=301,L,NC]
 RewriteRule ^home/?$ / [R=301,L]
 RewriteRule ^feed/?$ /blog/ [R=301,L]
 RewriteRule ^blog/feed/?$ /blog/ [R=301,L]
