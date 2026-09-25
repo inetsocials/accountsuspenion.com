@@ -112,6 +112,13 @@ try {
         exit;
     }
 
+    /* /page.html, /page.htm, /page.php -> /page/ when the static page exists (also covered by .htaccess). */
+    if (preg_match('~^/([a-z0-9][a-z0-9/-]*?)(?:/index)?\.(?:html?|php)$~i', $path, $hm) && is_file($site . '/' . strtolower($hm[1]) . '/index.html')) {
+        header('Cache-Control: public, max-age=3600');
+        header('Location: /' . strtolower($hm[1]) . '/', true, 301);
+        exit;
+    }
+
     /* Unknown URL: redirect table, then CMS post, else 404. */
     if (!$ready) {
         not_found($site);
