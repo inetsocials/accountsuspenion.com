@@ -38,11 +38,14 @@ RewriteRule ^[a-z0-9-]+-reinstatement/([a-z0-9-]+-reinstatement)/?$ /$1/ [R=301,
 # 4. Site-specific redirects from gen/redirects.csv (old WordPress URLs)
 # none configured
 
-# 5. Enforce trailing slash on extensionless paths
+# 5. CMS: blog sitemap, and every URL that is not a real file or folder goes to cms.php
+#    (redirects managed in the CRM, CMS blog posts, otherwise the 404 page)
+RewriteRule ^blog-sitemap\.xml$ /cms.php?sitemap=1 [L]
+RewriteRule ^_theme/ - [F,L]
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_URI} !\.[a-zA-Z0-9]{2,5}$
-RewriteCond %{REQUEST_URI} !/$
-RewriteRule ^(.*)$ /$1/ [R=301,L]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/(portal|api)/
+RewriteRule ^ /cms.php [L,QSA]
 </IfModule>
 
 <IfModule mod_headers.c>

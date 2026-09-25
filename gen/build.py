@@ -76,6 +76,13 @@ def testimonials_html(items: list[dict], title: str = "What clients say") -> str
     return section(summary + f'<div class="tgrid">{cards}</div>', title=title, eyebrow="Verified reviews", sid="reviews")
 
 
+def testimonial_slot(platform: str = "", service: str = "", title: str = "What clients say") -> str:
+    """Filled by site.js from /cms.php?feed=testimonials (published, consent-backed entries only). Hidden when empty."""
+    attrs = f' data-platform="{e(platform)}"' if platform else (f' data-service="{e(service)}"' if service else ' data-home="1"')
+    return (f'<section class="sec alt" data-testimonials{attrs} hidden><div class="wrap"><div class="sec-head"><p class="eyebrow">Verified reviews</p>'
+            f'<h2>{e(title)}</h2></div><p class="t-avg" data-t-avg></p><div class="tgrid" data-t-list></div></div></section>')
+
+
 # ====================================================================== home
 def build_home() -> None:
     path = "/"
@@ -175,7 +182,7 @@ def build_home() -> None:
             + section(ethics_html, sid="ethics")
             + section(tools_html, title="Check your case before you appeal", eyebrow="Free tools", cls="alt", sid="tools")
             + section(guides_html, title="Guides by platform", eyebrow="Blog", sid="guides")
-            + testimonials_html(verified_testimonials())
+            + (testimonials_html(verified_testimonials()) or testimonial_slot())
             + section(faq_html(home_faq), title="Questions people ask first", eyebrow="FAQ", cls="alt", sid="faq")
             + cta_band(ctx))
 
@@ -306,7 +313,7 @@ def build_platform(p: dict) -> None:
                       [(f"Start a {name} case", f"/contact-us/?source=platform&platform={p['id']}", "primary"),
                        ("Check your readiness", "/tools/reinstatement-readiness-score/", "light")], pid=p["id"])
             + f'<section class="sec"><div class="wrap layout"><div class="main">{blocks}</div>{aside}</div></section>'
-            + testimonials_html(verified_testimonials(platform=p["id"]), f"{name} clients")
+            + (testimonials_html(verified_testimonials(platform=p["id"]), f"{name} clients") or testimonial_slot(platform=p["id"], title=f"{name} clients"))
             + section(rel_html, title="Related platforms", cls="alt", sid="related")
             + cta_band(ctx, title=f"Your {name} case starts with the notice.", source="platform"))
 
@@ -350,7 +357,7 @@ def build_service(s: dict) -> None:
                       [("Start a confidential case", f"/contact-us/?source=service&service={s['id']}", "primary"),
                        ("How it works", "/how-it-works/", "light")])
             + f'<section class="sec"><div class="wrap layout"><div class="main">{blocks}</div>{aside}</div></section>'
-            + testimonials_html(verified_testimonials(service=s["id"]))
+            + (testimonials_html(verified_testimonials(service=s["id"])) or testimonial_slot(service=s["id"]))
             + section(rel_html, title="Related services", cls="alt", sid="related")
             + cta_band(ctx, source="service"))
     svc = {"@type": "Service", "name": s["name"], "serviceType": s["name"], "provider": {"@id": ORG_ID},
@@ -584,6 +591,7 @@ def build_contact() -> None:
     body = (f'<section class="phero"><div class="wrap narrow"><span class="pill">Received</span><h1>Your case has been received</h1>'
             f'<p class="lede">Your reference is <strong id="case-ref">being generated</strong>. We will reply in writing {e(C.REPLY_WINDOW)}. '
             'Keep this reference for any follow-up.</p>'
+            f'<p>You can <a id="status-link" href="{ctx.link("/portal/status")}">check its status at any time</a> with this reference and your email.</p>'
             f'<div class="ctas">{btn(ctx, "Read our guides meanwhile", "/blog/", "light")}{btn(ctx, "Back to home", "/", "ghost-dark")}</div>'
             '<p class="small">Do not submit a new appeal to the platform while we review, unless a deadline in the notice requires it.</p></div></section>')
     write(path, page(ctx, title=title, desc=desc, body=body, noindex=True), noindex=True)
@@ -761,6 +769,15 @@ def build_legal() -> None:
                 "Legal", "Cookie policy", "Short, because we set so little.", section(cookies), priority=0.2, cta=False)
 
 
+def build_theme() -> None:
+    """Page shell for CMS posts rendered by public_html/cms.php (absolute links, placeholders)."""
+    ctx = Ctx("/blog/%%SLUG%%/", absolute=True)
+    html = page(ctx, title="%%TITLE%%", desc="%%DESC%%", body="%%BODY%%", nodes=[])
+    out = DIST / "_theme" / "post.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(html, encoding="utf-8")
+
+
 def build_404() -> None:
     ctx = Ctx("/404.html", absolute=True)
     body = (f'<section class="phero"><div class="wrap narrow"><span class="pill">404</span><h1>That page is not here</h1>'
@@ -781,9 +798,9 @@ def build_seo_files() -> None:
 
     bots = ["OAI-SearchBot", "ChatGPT-User", "GPTBot", "PerplexityBot", "Perplexity-User", "ClaudeBot", "Claude-SearchBot",
             "Claude-User", "Google-Extended", "Applebot-Extended", "Bingbot", "DuckAssistBot"]
-    robots = "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /thank-you/\n\n"
+    robots = "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /portal/\nDisallow: /cms.php\nDisallow: /_theme/\nDisallow: /thank-you/\n\n"
     robots += "".join(f"User-agent: {b}\nAllow: /\nDisallow: /api/\n\n" for b in bots)
-    robots += f"Sitemap: {C.BASE_URL}/sitemap.xml\n"
+    robots += f"Sitemap: {C.BASE_URL}/sitemap.xml\nSitemap: {C.BASE_URL}/blog-sitemap.xml\n"
     (DIST / "robots.txt").write_text(robots, encoding="utf-8")
 
     llms = [f"# {C.BRAND}", "",
@@ -858,11 +875,14 @@ RewriteRule ^[a-z0-9-]+-reinstatement/([a-z0-9-]+-reinstatement)/?$ /$1/ [R=301,
 # 4. Site-specific redirects from gen/redirects.csv (old WordPress URLs)
 {chr(10).join(redirects) if redirects else "# none configured"}
 
-# 5. Enforce trailing slash on extensionless paths
+# 5. CMS: blog sitemap, and every URL that is not a real file or folder goes to cms.php
+#    (redirects managed in the CRM, CMS blog posts, otherwise the 404 page)
+RewriteRule ^blog-sitemap\\.xml$ /cms.php?sitemap=1 [L]
+RewriteRule ^_theme/ - [F,L]
 RewriteCond %{{REQUEST_FILENAME}} !-f
-RewriteCond %{{REQUEST_URI}} !\\.[a-zA-Z0-9]{{2,5}}$
-RewriteCond %{{REQUEST_URI}} !/$
-RewriteRule ^(.*)$ /$1/ [R=301,L]
+RewriteCond %{{REQUEST_FILENAME}} !-d
+RewriteCond %{{REQUEST_URI}} !^/(portal|api)/
+RewriteRule ^ /cms.php [L,QSA]
 </IfModule>
 
 <IfModule mod_headers.c>
@@ -1000,10 +1020,10 @@ def checks() -> bool:
         if not C.email() and re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}", re.sub(r"<script.*?</script>", "", html, flags=re.S)):
             errors.append(f"{rel}: email address in page body")
         visible = re.sub(r"<script.*?</script>", "", html, flags=re.S)
-        for rx, label in BANNED:
+        for rx, label in ([] if rel.parts[0] == "_theme" else BANNED):
             if rx.search(visible):
                 errors.append(f"{rel}: {label}: {rx.search(visible).group(0)!r}")
-        noindex = "noindex" in p.robots
+        noindex = "noindex" in p.robots or rel.parts[0] == "_theme"
         if len(p.title) > 62:
             warns.append(f"{rel}: title {len(p.title)} chars")
         if not noindex and not (110 <= len(p.desc) <= 165):
@@ -1012,10 +1032,12 @@ def checks() -> bool:
         for link in p.links:
             if link.startswith(("http:", "https:", "mailto:", "#", "data:")):
                 continue
+            if "portal/" in link or link.rstrip("/").endswith("portal") or "cms.php" in link:
+                continue  # served by the CRM and cms.php, not part of the static build
             target = unquote(urlsplit(link).path)
             if not target:
                 continue
-            if rel.as_posix() == "404.html":
+            if rel.as_posix() == "404.html" or rel.parts[0] == "_theme":
                 dest = DIST / target.lstrip("/")
             else:
                 dest = (base / target).resolve()
@@ -1040,6 +1062,13 @@ def main() -> int:
     if DIST.exists():
         shutil.rmtree(DIST)
     shutil.copytree(STATIC, DIST)
+    # Web-facing CRM files: the whole of dist/ is public_html. The CRM app itself (crm/ascrm) is uploaded beside it.
+    crm = ROOT / "crm"
+    shutil.copytree(crm / "portal", DIST / "portal")
+    (DIST / "api").mkdir(exist_ok=True)
+    for f in ("contact.php", "config.php", ".htaccess"):
+        shutil.copy2(crm / "website-api" / f, DIST / "api" / f)
+    shutil.copy2(crm / "website-api" / "cms.php", DIST / "cms.php")
     build_home()
     build_services_hub()
     build_categories()
@@ -1053,6 +1082,7 @@ def main() -> int:
     build_company_pages()
     build_legal()
     build_404()
+    build_theme()
     build_seo_files()
     build_htaccess()
     ok = checks()

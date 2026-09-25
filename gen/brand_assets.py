@@ -107,7 +107,24 @@ def main() -> None:
     d.text((80, 440), "Diagnose the notice. Evidence the fix. Appeal once, properly.", font=ImageFont.truetype(str(FONT), 28), fill=LIGHT_BLUE)
     d.rectangle([80, 520, 180, 526], fill=BLUE)
     og.save(OUT / "og.png", optimize=True)
-    print("brand assets written to", OUT)
+
+    # CRM portal logos (PNG, 2x for a 26 to 30 px display height)
+    crm = ROOT / "crm" / "portal" / "assets" / "img"
+    crm.mkdir(parents=True, exist_ok=True)
+    for name, word, tld in (("logo.png", NAVY, BLUE), ("logo-light.png", "#FFFFFF", LIGHT_BLUE)):
+        h = 96
+        font = ImageFont.truetype(str(FONT), 60)
+        w1 = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textlength("AccountSuspension", font=font)
+        w2 = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textlength(".com", font=font)
+        width = int(96 + 24 + w1 + w2 + 4)
+        img = Image.new("RGBA", (width, h), (0, 0, 0, 0))
+        img.alpha_composite(draw_mark(96), (0, 0))
+        d = ImageDraw.Draw(img)
+        d.text((120, 14), "AccountSuspension", font=font, fill=word)
+        d.text((120 + w1, 14), ".com", font=font, fill=tld)
+        img.save(crm / name, optimize=True)
+    draw_mark(64).save(crm / "favicon.png")
+    print("brand assets written to", OUT, "and", crm)
 
 
 if __name__ == "__main__":

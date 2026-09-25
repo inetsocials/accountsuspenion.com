@@ -3,7 +3,7 @@
 ## Project
 Name: accountsuspension.com website rebuild
 Client: AccountSuspension.com (DeepAI Services project)
-Status: v1.1 complete (logos, menu icons, expanded FAQs, trademark disclaimer, verified-only testimonials); 154/154 QA pass; awaiting WordPress URL export, real testimonials and Hostinger deploy
+Status: v2 complete: website + AS Case Vault CRM + client portal + CMS; site audit 0 issues; QA matrix 154/154; CRM end-to-end 151/151; awaiting Hostinger deploy on MySQL
 Last Updated: 09/25/2026
 
 ## Objective
@@ -47,6 +47,18 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Testimonials: DECLINED to fabricate reviews or a 4.9 rating (FTC 16 CFR Part 465). Built verified-only system: config.TESTIMONIALS renders on home, platform and service pages; true average shown at 5+ reviews; build fails without date and consent_ref
 - Fix: .pcard display rule overrode [hidden] (services filter); header CTA hidden under 1480 px
 
+## v2 changes (09/25/2026): CRM, portal, CMS, element audit
+- Source: DR_CASE_VAULT_v1.1_MASTER_PROMPT.md plus the dr-case-vault-v1.zip code (v1.0) supplied by the user; adapted rather than rebuilt
+- Rebranded to AccountSuspension.com / AS Case Vault: ascrm folder, ascv_ cookies, AS- references, US English, MM/DD/YYYY, America/New_York, USD, sales tax instead of VAT (default 0)
+- Domain: stages Diagnose, Evidence, Appeal, Protect; intake fields platform, issue, appeal history, urgency (deadline = priority lead); 42 platforms and 9 services mirrored from the website
+- Removal tracker became the appeal tracker (submission per platform route); search-ranking tracker replaced by a held-funds tracker (amounts, released, status, expected release, per-currency totals) on staff, portal and data export
+- Ethics screening rewritten for account cases (no ban evasion, genuine documents, no fraud/child-safety/sanctions/extremism cases, sanctions and funds, identity)
+- Client NDA became an engagement and confidentiality agreement (attorney to review); "never phones" claims removed
+- New CMS: blog posts (safe Markdown, published at /blog/slug/ via cms.php and the site theme shell, blog-sitemap.xml), verified testimonials (consent record required, second-person approval, average shown from 5 reviews), redirects with hit counts
+- dist/ is now the complete public_html (site + portal + api + cms.php); standalone file-store intake retired
+- Website fixes: long buttons could overflow phones (Gmail, Merchant Center pages); 24 px tap targets everywhere; footer contrast; touch-tablet mega menus open on first tap; local file:// preview links work; Client login and Check a case links; thank-you status link
+- CRM contrast fixes (green and neutral badges, calendar adjacent-month days)
+
 ## Completed Work
 - Live site inspection via search index (direct fetch blocked by sandbox egress): URL map reconstructed
 - gen/ generator, static/ assets, api/contact.php, server-tools/read_cases.php, qa/qa_matrix.py
@@ -55,6 +67,9 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Build checks: 0 errors, 0 warnings. QA: 154/154 at 6 breakpoints including end-to-end encrypted intake
 
 ## Pending Work
+- Deploy: MySQL on Hostinger, installer, master key offline backup, cron, SMTP, test intake
+- Attorney review of the client engagement agreement text (Settings)
+- Export WordPress sitemap and add old URLs in CRM > Website > Redirects
 - Collect genuine client reviews with written consent; add to gen/config.py TESTIMONIALS; rebuild
 - Export WordPress sitemaps and add unmatched URLs (especially blog posts) to gen/redirects.csv, rebuild
 - Owner inputs: legal name, registration line, optional contact email, response windows
@@ -80,6 +95,8 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Secrets referenced only as {{APP_KEY}}, {{IP_SALT}} placeholders
 
 ## Open Questions
+- MySQL path verified only by code review in this environment (tests run on SQLite, as in the original spec)
+- sodium_compat fallback from spec v1.1 was not in the supplied v1.0 zip; sodium extension required
 - Full list of current blog post URLs
 - Legal entity, jurisdiction and registration details
 - Real turnaround windows and whether priority handling is offered

@@ -160,6 +160,7 @@ def util_bar(ctx: Ctx) -> str:
         f'<li><a href="{ctx.link("/tools/reinstatement-readiness-score/")}">Free Readiness Score</a></li>'
         f'<li><a href="{ctx.link("/pricing/")}">Pricing</a></li>'
         f'<li><a href="{ctx.link("/blog/")}">Blog</a></li>'
+        f'<li><a class="client-login" href="{ctx.link("/portal/")}">{icon("lock", "ic xs")}Client login</a></li>'
         '</ul></div></div>'
     )
 
@@ -201,6 +202,8 @@ def nav_html(ctx: Ctx) -> str:
                 ("Pricing", "/pricing/", "file", ""),
                 ("About us", "/about-us/", "users", ""),
                 ("Contact us", "/contact-us/", "mail", ""),
+                ("Client login", "/portal/", "lock", ""),
+                ("Check a case", "/portal/status", "search", ""),
             )) +
         '</ul>'
         '<p class="m-note">Independent case preparation. Not affiliated with any platform.</p>'
@@ -233,7 +236,8 @@ def footer_html(ctx: Ctx) -> str:
     cat_links = [(c["name"], c["path"]) for c in CATEGORIES.values()]
     svc_links = [(s["name"], s["path"]) for s in SERVICES[:6]]
     co_links = [("About us", "/about-us/"), ("How it works", "/how-it-works/"), ("Pricing", "/pricing/"),
-                ("FAQ", "/faq/"), ("What we will not do", "/ethics/"), ("Blog", "/blog/"), ("Contact us", "/contact-us/")]
+                ("FAQ", "/faq/"), ("What we will not do", "/ethics/"), ("Blog", "/blog/"), ("Contact us", "/contact-us/"),
+                ("Client login", "/portal/"), ("Check a case", "/portal/status")]
 
     contact_bits = []
     if C.email():
@@ -266,6 +270,7 @@ def footer_html(ctx: Ctx) -> str:
         f'Use of a name or logo does not imply any relationship. <a href="{ctx.link("/disclaimer/")}">Read the full disclaimer</a>.</p></div>'
         f'<div class="f-legal"><p>&copy; <span data-year>{C.TODAY.year}</span> {e(holder)}. {reg}</p>'
         '<ul>'
+        f'<li><a href="{ctx.link("/portal/")}">Client login</a></li>'
         f'<li><a href="{ctx.link("/privacy-policy/")}">Privacy</a></li>'
         f'<li><a href="{ctx.link("/terms-and-conditions/")}">Terms</a></li>'
         f'<li><a href="{ctx.link("/disclaimer/")}">Disclaimer</a></li>'

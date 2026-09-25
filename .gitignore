@@ -1,7 +1,11 @@
 __pycache__/
 *.pyc
 qa/screens/
-dist/api/config.php
-static/api/config.php
-.DS_Store
 *.zip
+.DS_Store
+# runtime files the CRM creates on the server (never commit)
+crm/ascrm/config/config.php
+crm/ascrm/config/setup.key
+crm/ascrm/config/installed.lock
+crm/ascrm/keys/master.key*
+crm/ascrm/storage/*/

@@ -1,0 +1,2 @@
+# Safety net: this folder must live outside public_html. If it is ever uploaded inside it, deny everything.
+Require all denied

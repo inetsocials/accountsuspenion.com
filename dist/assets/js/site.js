@@ -207,10 +207,107 @@
     show(0);
   }
 
-  /* thank-you reference */
+  /* thank-you reference and status link */
   var refEl = $("#case-ref");
   if (refEl) {
     var ref = (params.get("ref") || "").toUpperCase();
     refEl.textContent = REF_RE.test(ref) ? ref : "in your confirmation";
+    var st = $("#status-link");
+    if (st && REF_RE.test(ref)) { st.href = st.getAttribute("href").split("?")[0] + "?ref=" + encodeURIComponent(ref); }
   }
+
+  var local = window.location.protocol === "file:";
+
+  /* Local preview (opened from disk): folder links need index.html to open. Production is unaffected. */
+  if (local) {
+    $$("a[href]").forEach(function (a) {
+      var h = a.getAttribute("href");
+      if (/^(https?:|mailto:|#)/.test(h)) { return; }
+      var parts = h.split("#");
+      if (/\/$/.test(parts[0]) || parts[0] === "." || parts[0] === "./") {
+        a.setAttribute("href", parts[0].replace(/\/?$/, "/") + "index.html" + (parts[1] ? "#" + parts[1] : ""));
+      }
+    });
+  }
+
+  /* Touch screens wide enough for the desktop menu: first tap opens the mega menu, second tap follows the link. */
+  var coarse = window.matchMedia && window.matchMedia("(hover: none)").matches;
+  if (coarse) {
+    $$(".menu > li.has-mega > .menu-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        var li = btn.parentNode;
+        if (!li.classList.contains("open")) {
+          ev.preventDefault();
+          $$(".menu > li.has-mega.open").forEach(function (o) { o.classList.remove("open"); });
+          li.classList.add("open");
+        }
+      });
+    });
+    doc.addEventListener("click", function (ev) {
+      if (!ev.target.closest(".has-mega")) { $$(".menu > li.has-mega.open").forEach(function (o) { o.classList.remove("open"); }); }
+    });
+  }
+
+  /* CMS feeds (served by /cms.php from the CRM). Everything is rendered with textContent. */
+  function getJSON(url) {
+    if (local || !window.fetch) { return Promise.resolve(null); }
+    return fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  function el(tag, cls, text) {
+    var n = doc.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text !== undefined && text !== null) { n.textContent = text; }
+    return n;
+  }
+
+  /* Blog listing: prepend published CMS posts to the built-in guides. */
+  var guideList = $("#guide-list .fgroup") || $("#guide-list");
+  if (guideList && $("#gf")) {
+    getJSON("/cms.php?feed=posts").then(function (d) {
+      if (!d || !d.items || !d.items.length) { return; }
+      d.items.slice().reverse().forEach(function (p) {
+        if (!/^\/blog\/[a-z0-9-]+\/$/.test(p.url)) { return; }
+        var a = el("a", "card cms-post in");
+        a.href = p.url;
+        a.setAttribute("data-filter-item", "");
+        a.setAttribute("data-text", (p.title + " " + p.category).toLowerCase());
+        a.appendChild(el("span", "tag", p.category));
+        a.appendChild(el("h3", "", p.title));
+        a.appendChild(el("p", "", p.excerpt));
+        a.appendChild(el("span", "more", "Read the guide"));
+        guideList.insertBefore(a, guideList.firstChild);
+      });
+      var input = $("#gf");
+      if (input) { input.dispatchEvent(new Event("input")); }
+    });
+  }
+
+  /* Verified testimonials: only published, consent-backed entries from the CRM. */
+  $$("[data-testimonials]").forEach(function (box) {
+    var q = box.getAttribute("data-platform") ? "&platform=" + encodeURIComponent(box.getAttribute("data-platform"))
+      : (box.getAttribute("data-service") ? "&service=" + encodeURIComponent(box.getAttribute("data-service")) : "");
+    getJSON("/cms.php?feed=testimonials" + q).then(function (d) {
+      if (!d || !d.items || !d.items.length) { return; }
+      var list = $("[data-t-list]", box);
+      d.items.forEach(function (t) {
+        var f = el("figure", "tcard");
+        var stars = el("p", "stars", new Array(Math.max(1, Math.min(5, t.rating)) + 1).join("\u2605"));
+        stars.setAttribute("aria-label", t.rating + " out of 5");
+        f.appendChild(stars);
+        f.appendChild(el("blockquote", "", t.text));
+        var cap = el("figcaption");
+        cap.appendChild(el("strong", "", t.name));
+        cap.appendChild(doc.createTextNode([t.role, t.platform].filter(Boolean).join(", ")));
+        f.appendChild(cap);
+        list.appendChild(f);
+      });
+      var avg = $("[data-t-avg]", box);
+      if (avg && d.count >= 5 && d.average) {
+        avg.textContent = "Average rating " + Number(d.average).toFixed(1) + " out of 5 from " + d.count + " verified client reviews. Individual results vary and are not a guarantee of any platform decision.";
+      }
+      box.hidden = false;
+    });
+  });
 })();

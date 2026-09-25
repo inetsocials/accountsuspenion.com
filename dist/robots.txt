@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /portal/
+Disallow: /cms.php
+Disallow: /_theme/
 Disallow: /thank-you/
 
 User-agent: OAI-SearchBot
@@ -52,3 +55,4 @@ Allow: /
 Disallow: /api/
 
 Sitemap: https://accountsuspension.com/sitemap.xml
+Sitemap: https://accountsuspension.com/blog-sitemap.xml
