@@ -3,7 +3,7 @@
 ## Project
 Name: accountsuspension.com website rebuild
 Client: AccountSuspension.com (DeepAI Services project)
-Status: v1 rebuild complete; 87 pages; build checks and 154/154 Playwright QA pass; awaiting WordPress URL export and Hostinger deploy
+Status: v1.1 complete (logos, menu icons, expanded FAQs, trademark disclaimer, verified-only testimonials); 154/154 QA pass; awaiting WordPress URL export, real testimonials and Hostinger deploy
 Last Updated: 09/25/2026
 
 ## Objective
@@ -38,6 +38,15 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Ethics page: no ban evasion, no document alteration, no inside access, no guaranteed outcome, no fraud or child-safety cases
 - Logo: new SVG wordmark outlined from Plus Jakarta Sans (no client logo supplied)
 
+## v1.1 changes (09/25/2026)
+- Platform logos: 34 official marks from Simple Icons (CC0 data, vendored in gen/brand/simple-icons); 7 neutral letter tiles for brands that asked Simple Icons to remove their marks (Amazon, Walmart, Wayfair, Lowe's, LinkedIn, Xbox, Yahoo)
+- Logos in mega menu, mobile menu, platform hero, cards, chips, services hub, notice decoder
+- Icons on every menu item (category heads, services, resources, solo links, mobile)
+- FAQs: platform pages 10 to 13 each (specific + category + common), services 7 each, home 8, FAQ page 22 in 6 groups
+- Footer trademark and endorsement disclaimer: names and logos used for identification and information only; not a partner, affiliate, sponsor or endorsee
+- Testimonials: DECLINED to fabricate reviews or a 4.9 rating (FTC 16 CFR Part 465). Built verified-only system: config.TESTIMONIALS renders on home, platform and service pages; true average shown at 5+ reviews; build fails without date and consent_ref
+- Fix: .pcard display rule overrode [hidden] (services filter); header CTA hidden under 1480 px
+
 ## Completed Work
 - Live site inspection via search index (direct fetch blocked by sandbox egress): URL map reconstructed
 - gen/ generator, static/ assets, api/contact.php, server-tools/read_cases.php, qa/qa_matrix.py
@@ -46,6 +55,7 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Build checks: 0 errors, 0 warnings. QA: 154/154 at 6 breakpoints including end-to-end encrypted intake
 
 ## Pending Work
+- Collect genuine client reviews with written consent; add to gen/config.py TESTIMONIALS; rebuild
 - Export WordPress sitemaps and add unmatched URLs (especially blog posts) to gen/redirects.csv, rebuild
 - Owner inputs: legal name, registration line, optional contact email, response windows
 - Create api/config.php on server with APP_KEY, IP_SALT, NOTIFY_TO, NOTIFY_FROM

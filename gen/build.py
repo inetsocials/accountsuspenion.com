@@ -20,9 +20,9 @@ import config as C  # noqa: E402
 from components import (btn, card, cta_band, faq_html, fmt, page_hero, prose, section,  # noqa: E402
                         sources_html, steps, ticks, trust_line)
 from content_guides import GUIDES  # noqa: E402
-from content_platforms import BY_ID, CATEGORIES, COMMON_FAQ, PLATFORMS  # noqa: E402
-from content_services import ETHICS, METHOD, SERVICES, SVC_BY_ID  # noqa: E402
-from templates import (Ctx, crumbs_node, e, faq_node, icon, page, webpage_node,  # noqa: E402
+from content_platforms import BY_ID, CATEGORIES, CATEGORY_FAQ, COMMON_FAQ, PLATFORMS  # noqa: E402
+from content_services import ETHICS, METHOD, SERVICE_COMMON_FAQ, SERVICES, SVC_BY_ID  # noqa: E402
+from templates import (Ctx, crumbs_node, e, faq_node, icon, page, plogo, webpage_node,  # noqa: E402
                        ORG_ID)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,6 +44,36 @@ def write(path: str, html: str, priority: float = 0.6, noindex: bool = False, si
 
 
 HOME = ("Home", "/")
+
+
+# ====================================================================== testimonials
+REQUIRED_T = ("name", "text", "rating", "date", "consent_ref")
+
+
+def verified_testimonials(platform: str = "", service: str = "") -> list[dict]:
+    out = []
+    for t in C.TESTIMONIALS:
+        if platform and t.get("platform") != platform:
+            continue
+        if service and t.get("service") != service:
+            continue
+        out.append(t)
+    return out
+
+
+def testimonials_html(items: list[dict], title: str = "What clients say") -> str:
+    """Renders only verified testimonials from config.TESTIMONIALS. Empty list renders nothing."""
+    if not items:
+        return ""
+    avg = sum(float(t["rating"]) for t in C.TESTIMONIALS) / len(C.TESTIMONIALS)
+    summary = (f'<p class="sec-intro">Average rating {avg:.1f} out of 5 from {len(C.TESTIMONIALS)} verified client reviews. '
+               'Individual results vary and are not a guarantee of any platform decision.</p>') if len(C.TESTIMONIALS) >= 5 else ""
+    cards = "".join(
+        f'<figure class="tcard"><p class="stars" aria-label="{e(t["rating"])} out of 5">{"&#9733;" * int(round(float(t["rating"])))}</p>'
+        f'<blockquote>{e(t["text"])}</blockquote><figcaption><strong>{e(t["name"])}</strong>'
+        f'{e(", ".join(x for x in (t.get("role", ""), BY_ID[t["platform"]]["name"] if t.get("platform") in BY_ID else "") if x))}</figcaption></figure>'
+        for t in items[:6])
+    return section(summary + f'<div class="tgrid">{cards}</div>', title=title, eyebrow="Verified reviews", sid="reviews")
 
 
 # ====================================================================== home
@@ -101,7 +131,7 @@ def build_home() -> None:
     for cid, c in CATEGORIES.items():
         for p in PLATFORMS:
             if p["cat"] == cid:
-                chips.append(f'<li><a href="{ctx.link(p["path"])}">{e(p["name"])}</a></li>')
+                chips.append(f'<li><a href="{ctx.link(p["path"])}">{plogo(ctx, p["id"])}{e(p["name"])}</a></li>')
     chips_html = f'<ul class="chips">{"".join(chips)}</ul>'
 
     feat = ["case-review", "plan-of-action", "appeal-prep", "held-funds", "ip-complaints", "compliance-audit"]
@@ -130,6 +160,9 @@ def build_home() -> None:
         ("Can you guarantee my account will be reinstated?", "No. Platforms make the decision. We control the quality of the diagnosis and the submission, and we tell you honestly when a case is weak."),
         ("How much does it cost?", "Scope and a fixed fee are confirmed in writing after a preliminary evidence review, before any paid work starts. No hidden fees and no open-ended hourly billing."),
         ("Is what I send you confidential?", "Yes. Case details are used only to prepare your case. We do not publish client names or outcomes without written consent."),
+        ("How quickly can you start?", f"We reply in writing {C.REPLY_WINDOW}. Initial analysis is completed {C.REVIEW_WINDOW} once we have your notice and documents. Priority review is available when a deadline is close."),
+        ("Can you help get my held funds released?", "Often, yes. Fund release follows its own rules on most platforms, even when the account is not reinstated. We identify the route and prepare the request."),
+        ("Do you need my password?", "No, and nobody legitimate will ask for it. You submit through your own account while we guide each step."),
     ]
 
     body = (hero
@@ -142,6 +175,7 @@ def build_home() -> None:
             + section(ethics_html, sid="ethics")
             + section(tools_html, title="Check your case before you appeal", eyebrow="Free tools", cls="alt", sid="tools")
             + section(guides_html, title="Guides by platform", eyebrow="Blog", sid="guides")
+            + testimonials_html(verified_testimonials())
             + section(faq_html(home_faq), title="Questions people ask first", eyebrow="FAQ", cls="alt", sid="faq")
             + cta_band(ctx))
 
@@ -165,7 +199,7 @@ def build_services_hub() -> None:
     for cid, c in CATEGORIES.items():
         items = "".join(
             f'<a class="pcard" href="{ctx.link(p["path"])}" data-filter-item data-text="{e((p["name"] + " " + c["name"]).lower())}">'
-            f'<strong>{e(p["name"])}</strong><small>{e(p["h1"])}</small></a>'
+            f'{plogo(ctx, p["id"])}<strong>{e(p["name"])}</strong><small>{e(p["h1"])}</small></a>'
             for p in PLATFORMS if p["cat"] == cid)
         groups.append(f'<div class="fgroup" data-filter-group><h3><a href="{ctx.link(c["path"])}">{e(c["name"])}</a></h3><div class="pgrid">{items}</div></div>')
 
@@ -193,7 +227,7 @@ def build_categories() -> None:
         ctx = Ctx(path)
         trail = [HOME, ("Services", "/services/"), (c["name"], path)]
         plats = [p for p in PLATFORMS if p["cat"] == cid]
-        cards = '<div class="g3">' + "".join(card(ctx, p["path"], p["h1"], p["lede"], p["name"]) for p in plats) + "</div>"
+        cards = '<div class="g3">' + "".join(card(ctx, p["path"], p["h1"], p["lede"], p["name"], pid=p["id"]) for p in plats) + "</div>"
         guides = [g for g in GUIDES if g["cat"] == cid]
         g_html = ""
         if guides:
@@ -214,7 +248,9 @@ def build_platform(p: dict) -> None:
     cat = CATEGORIES[p["cat"]]
     trail = [HOME, ("Services", "/services/"), (cat["name"], cat["path"]), (p["name"], path)]
     name = p["name"]
-    faqs = p["faqs"] + [(q.format(name=name), a.format(name=name)) for q, a in COMMON_FAQ]
+    faqs = (p["faqs"]
+            + [(q.format(name=name), a.format(name=name)) for q, a in CATEGORY_FAQ.get(p["cat"], [])]
+            + [(q.format(name=name), fmt(a).replace("{name}", name)) for q, a in COMMON_FAQ])
 
     notices = "".join(f'<div class="notice-row"><p class="n-q">&ldquo;{e(q)}&rdquo;</p><p class="n-a">{e(a)}</p></div>' for q, a in p["notices"])
     we_do = [
@@ -232,7 +268,7 @@ def build_platform(p: dict) -> None:
         "Help you open a new account or get around enforcement",
     ]
     rel = [BY_ID[r] for r in p["related"] if r in BY_ID]
-    rel_html = '<div class="g3">' + "".join(card(ctx, r["path"], r["h1"], r["lede"], r["name"]) for r in rel) + "</div>"
+    rel_html = '<div class="g3">' + "".join(card(ctx, r["path"], r["h1"], r["lede"], r["name"], pid=r["id"]) for r in rel) + "</div>"
     guides = [g for g in GUIDES if p["id"] in g["platforms"]]
     guide_html = ""
     if guides:
@@ -268,8 +304,9 @@ def build_platform(p: dict) -> None:
 
     body = (page_hero(ctx, trail, cat["name"], p["h1"], p["lede"],
                       [(f"Start a {name} case", f"/contact-us/?source=platform&platform={p['id']}", "primary"),
-                       ("Check your readiness", "/tools/reinstatement-readiness-score/", "light")])
+                       ("Check your readiness", "/tools/reinstatement-readiness-score/", "light")], pid=p["id"])
             + f'<section class="sec"><div class="wrap layout"><div class="main">{blocks}</div>{aside}</div></section>'
+            + testimonials_html(verified_testimonials(platform=p["id"]), f"{name} clients")
             + section(rel_html, title="Related platforms", cls="alt", sid="related")
             + cta_band(ctx, title=f"Your {name} case starts with the notice.", source="platform"))
 
@@ -286,7 +323,8 @@ def build_service(s: dict) -> None:
     ctx = Ctx(path)
     stage = next(m for m in METHOD if m["id"] == s["stage"])
     trail = [HOME, ("Services", "/services/"), (s["name"], path)]
-    faqs = [(q, fmt(a)) for q, a in s["faqs"]]
+    faqs = [(q, fmt(a)) for q, a in s["faqs"]] + [
+        (q.replace("{svc}", s["name"].lower() if q.startswith("How is") else s["name"]), a.replace("{svc}", s["name"].lower())) for q, a in SERVICE_COMMON_FAQ]
     rel = [x for x in SERVICES if x["id"] != s["id"]][:3] if s["id"] not in ("held-funds",) else [SVC_BY_ID["case-review"], SVC_BY_ID["verification"], SVC_BY_ID["monitoring"]]
     extra = ""
     if s["id"] == "held-funds":
@@ -312,6 +350,7 @@ def build_service(s: dict) -> None:
                       [("Start a confidential case", f"/contact-us/?source=service&service={s['id']}", "primary"),
                        ("How it works", "/how-it-works/", "light")])
             + f'<section class="sec"><div class="wrap layout"><div class="main">{blocks}</div>{aside}</div></section>'
+            + testimonials_html(verified_testimonials(service=s["id"]))
             + section(rel_html, title="Related services", cls="alt", sid="related")
             + cta_band(ctx, source="service"))
     svc = {"@type": "Service", "name": s["name"], "serviceType": s["name"], "provider": {"@id": ORG_ID},
@@ -445,7 +484,7 @@ def build_tools() -> None:
                 continue
             for q, a in p["notices"]:
                 rows.append(f'<div class="notice-row" data-filter-item data-text="{e((p["name"] + " " + q + " " + a).lower())}">'
-                            f'<p class="n-p"><a href="{ctx.link(p["path"])}">{e(p["name"])}</a></p>'
+                            f'<p class="n-p"><a href="{ctx.link(p["path"])}">{plogo(ctx, p["id"])}{e(p["name"])}</a></p>'
                             f'<p class="n-q">&ldquo;{e(q)}&rdquo;</p><p class="n-a">{e(a)}</p></div>')
         groups.append(f'<div class="fgroup" data-filter-group><h3>{e(c["name"])}</h3><div class="notices">{"".join(rows)}</div></div>')
     filt = ('<div class="filter"><label for="nf" class="sr">Search notice wording</label>'
@@ -592,23 +631,47 @@ def build_company_pages() -> None:
                     {"@type": "HowToStep", "position": i + 1, "name": m["name"], "text": m["line"]} for i, m in enumerate(METHOD)]}], 0.7)
 
     # faq
-    gen_faq = [
-        ("Are you affiliated with Amazon, PayPal, Meta, Google or any other platform?", "No. We are independent and have no special access. All submissions go through official routes available to every account holder."),
-        ("Can you guarantee reinstatement?", "No one can honestly guarantee a platform decision. We tell you our honest view of the odds at the review stage."),
-        ("How much do you charge?", "Scope and a fixed fee are confirmed in writing after a preliminary evidence review and before any paid work starts. No hidden fees and no open-ended hourly billing."),
-        ("How fast will I hear back?", f"We reply in writing {C.REPLY_WINDOW}. Initial analysis and a Plan of Action draft are typically completed {C.REVIEW_WINDOW} once we have your documents."),
-        ("Do you need my password?", "No. We guide you to submit through your own account. Never share passwords or one-time codes with anyone."),
-        ("Do you log in to my account?", "We prefer not to. New logins from unfamiliar locations can trigger further security flags. You stay in control."),
-        ("Can you help if my appeal was already rejected?", "Often, yes. We find what was missing. We will not resubmit the same content, because repeated identical appeals rarely help."),
-        ("Can you help me get my held funds even if the account is not reinstated?", "Frequently. Fund release follows its own rules on most platforms. We identify the route and prepare the request."),
-        ("Will you help me open a new account?", "No. New accounts during a suspension are treated as evasion on almost every platform and usually end the original case."),
-        ("Is my information confidential?", "Yes. It is used only for your case and is not published without written consent. See our privacy policy."),
-        ("Are you lawyers?", "No. Where a case needs legal advice, such as litigation, arbitration or a counter-notice with legal risk, we tell you to speak to an attorney."),
-        ("Do you work outside the United States?", "Our content is written for US account holders. We can review cases elsewhere, but platform processes and consumer laws vary by country."),
+    faq_groups = [
+        ("About us", [
+            ("Are you affiliated with Amazon, PayPal, Meta, Google or any other platform?", "No. We are independent and have no special access. All submissions go through official routes available to every account holder."),
+            ("Are you lawyers?", "No. Where a case needs legal advice, such as litigation, arbitration or a counter-notice with legal risk, we tell you to speak to an attorney."),
+            ("Who do you work with?", "Marketplace sellers, merchants, creators, advertisers, drivers, hosts, freelancers and individuals whose accounts have been suspended, restricted or deactivated, or whose funds are held."),
+            ("Do you work outside the United States?", "Our content is written for US account holders. We can review cases elsewhere, but platform processes and consumer laws vary by country."),
+        ]),
+        ("Outcomes and odds", [
+            ("Can you guarantee reinstatement?", "No one can honestly guarantee a platform decision. We tell you our honest view of the odds at the review stage."),
+            ("What makes a case strong?", "A clear root cause, corrective actions that have already happened, documents that match the account exactly, and a first appeal that has not yet been used."),
+            ("Can you help if my appeal was already rejected?", "Often, yes. We find what was missing. We will not resubmit the same content, because repeated identical appeals rarely help."),
+            ("What if the decision is final?", "Some platforms mark decisions as final. We check whether any route remains, such as a separate fund release, a verification path or a legal option, and say so plainly if none does."),
+        ]),
+        ("Fees and timing", [
+            ("How much do you charge?", "Scope and a fixed fee are confirmed in writing after a preliminary evidence review and before any paid work starts. No hidden fees and no open-ended hourly billing."),
+            ("Do you charge a success fee?", "No. Fees are for the work performed. A platform decision is outside our control, so we do not tie fees to it."),
+            ("How fast will I hear back?", f"We reply in writing {C.REPLY_WINDOW}. Initial analysis and a Plan of Action draft are typically completed {C.REVIEW_WINDOW} once we have your documents."),
+            ("How long does the platform take to decide?", "Each platform sets its own review times, and they vary with the case type and volume. We tell you what to expect for your platform and how to follow up."),
+        ]),
+        ("Held funds", [
+            ("Can I get my held funds even if the account is not reinstated?", "Frequently. Fund release follows its own rules on most platforms. We identify the route and prepare the request."),
+            ("How long can a platform hold my money?", "It depends on the platform agreement and your notice. PayPal, for example, commonly holds funds for up to 180 days after a permanent limitation. We find the date and conditions that apply to you."),
+            ("Someone offered to unlock my funds for a fee. Should I pay?", "No. Only the platform can release funds. Fee-first recovery offers and claims of inside contacts are common scams."),
+        ]),
+        ("Security and confidentiality", [
+            ("Do you need my password?", "No. We guide you to submit through your own account. Never share passwords or one-time codes with anyone."),
+            ("Do you log in to my account?", "We prefer not to. New logins from unfamiliar locations can trigger further security flags. You stay in control."),
+            ("Is my information confidential?", "Yes. It is used only for your case, stored encrypted and not published without written consent. See our privacy policy."),
+            ("How do you store what I send?", "Case submissions are encrypted on arrival and stored outside the public website. Staff alert emails contain only a case reference, never your details."),
+        ]),
+        ("What we will not do", [
+            ("Will you help me open a new account?", "No. New accounts during a suspension are treated as evasion on almost every platform and usually end the original case."),
+            ("Can you create or fix documents for my appeal?", "No. Every document must be genuine and yours. We check documents for consistency but never create or alter them."),
+            ("Do you take every case?", "No. We decline cases involving fraud, child safety, sanctions, violent extremism or scams against consumers, and cases that would require misrepresenting facts."),
+        ]),
     ]
+    gen_faq = [qa for _, items in faq_groups for qa in items]
+    faq_body = "".join(section(faq_html(items), title=g, cls="alt" if i % 2 else "", sid=f"faq-{i + 1}") for i, (g, items) in enumerate(faq_groups))
     simple_page("/faq/", "FAQ | Account Suspension & Reinstatement Questions",
                 "Answers on fees, timing, confidentiality, held funds, rejected appeals and what we will and will not do for suspended accounts.",
-                "FAQ", "Frequently asked questions", "Straight answers before you start.", section(faq_html(gen_faq)), [faq_node(gen_faq)], 0.7, "FAQPage")
+                "FAQ", "Frequently asked questions", "Straight answers before you start, grouped by topic.", faq_body, [faq_node(gen_faq)], 0.7)
 
     # pricing
     models = [
@@ -897,6 +960,14 @@ BANNED = [
 def checks() -> bool:
     errors: list[str] = []
     warns: list[str] = []
+    for i, t in enumerate(C.TESTIMONIALS):
+        missing = [k for k in REQUIRED_T if not str(t.get(k, "")).strip()]
+        if missing:
+            errors.append(f"config.TESTIMONIALS[{i}] missing {missing}: every testimonial needs a real client, date and consent record")
+        if t.get("platform") and t["platform"] not in BY_ID:
+            errors.append(f"config.TESTIMONIALS[{i}] unknown platform {t['platform']!r}")
+        if t.get("service") and t["service"] not in SVC_BY_ID:
+            errors.append(f"config.TESTIMONIALS[{i}] unknown service {t['service']!r}")
     text_ext = {".html", ".css", ".js", ".txt", ".xml", ".php", ".htaccess", ""}
     for f in DIST.rglob("*"):
         if f.is_dir() or (f.suffix not in text_ext and f.name != ".htaccess"):

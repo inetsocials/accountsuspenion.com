@@ -190,6 +190,16 @@ SERVICES = [
 
 SVC_BY_ID = {s["id"]: s for s in SERVICES}
 
+# Appended to every service page ({svc} is replaced with the service name).
+SERVICE_COMMON_FAQ = [
+    ("How is the {svc} fee set?", "Scope and a fixed fee are confirmed in writing after a preliminary evidence review and before any paid work starts. No hidden fees and no open-ended hourly billing."),
+    ("Which platforms does {svc} cover?", "Every platform on our services page, from marketplaces and payment providers to social, advertising, content, gig and email accounts. If yours is not listed, send the notice and we will tell you whether we can help."),
+    ("Is the information I share for {svc} kept confidential?", "Yes. It is used only to prepare your case, stored encrypted, and never published without your written consent."),
+    ("Do you submit anything without my approval?", "No. You review and approve every document, and the submission goes through your own account."),
+    ("What if {svc} shows my case is weak?", "We tell you plainly, in writing, before you spend more. Sometimes the better route is fund release, a compliance fix, or legal advice rather than another appeal."),
+]
+
+
 ETHICS = [
     ("We do not help anyone evade a ban.", "No new, stealth, rented or purchased accounts, no device or identity spoofing, and no advice on getting around enforcement. It breaches every platform's terms and destroys the original case."),
     ("We do not create, edit or source documents.", "Every invoice, ID and record in an appeal must be genuine and yours. We check documents for consistency; we never alter them."),

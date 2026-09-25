@@ -75,13 +75,83 @@ CATEGORIES: dict[str, dict] = {
     },
 }
 
-# Shared FAQ appended to every platform page.
+# Shared FAQ appended to every platform page ({name} is replaced per platform).
 COMMON_FAQ = [
     ("Are you affiliated with {name}?",
      "No. We are an independent case preparation service. We have no special access to {name}, no internal contacts, and we do not claim otherwise. Every submission goes through the official route {name} provides to account holders."),
-    ("Can you guarantee reinstatement?",
+    ("Can you guarantee my {name} account will be reinstated?",
      "No one can honestly guarantee a platform decision. What we control is the quality of the diagnosis, the evidence and the written response. We tell you at the review stage if we think the case is weak, and why."),
+    ("How long does {name} take to review an appeal?",
+     "{name} sets its own review times and they vary with the case type and volume. What we control is preparation: our initial analysis is completed {review} once we have your notice and documents."),
+    ("Can I appeal to {name} myself instead of using a service?",
+     "Yes. Every account holder can use the official route, and our guides explain how. People come to us when the stakes are high, when appeals are limited, or when a first appeal has already been rejected and they need to know what was missing."),
+    ("What should I send you to start a {name} case?",
+     "The full notice text, screenshots of the account status, any appeals already sent and the replies, and the records that relate to the issue. Never send passwords or one-time codes: we do not need them."),
+    ("My {name} appeal was already rejected. Is it too late?",
+     "Not always. A rejection tells you what the reviewer did not accept. We read it against the original notice and your data to find the gap, and we tell you honestly whether a further submission is worth making."),
+    ("Will you log in to my {name} account?",
+     "We prefer not to. New logins from unfamiliar locations can trigger further security flags. You stay in control and submit through your own account while we guide each step."),
 ]
+
+# Category-level FAQ appended to every platform in that category.
+CATEGORY_FAQ = {
+    "commerce": [
+        ("What is a Plan of Action for {name}?",
+         "A short, specific document with three parts: the root cause of the problem in your operation, the corrective actions already completed, and the preventive measures that stop it recurring. It is supported by documents {name} can verify."),
+        ("Will my {name} listings and reviews come back after reinstatement?",
+         "Usually the account returns with its history, but listings can need to be reactivated or corrected one by one. Check inventory, pricing and listing status as soon as access returns."),
+        ("Can a related account get me suspended on {name}?",
+         "Yes. Marketplaces link accounts through shared details such as addresses, payment methods, devices and people. If the link is wrong or innocent, the appeal needs to explain the relationship with evidence."),
+    ],
+    "payments": [
+        ("Is getting my {name} account back the same as getting my money back?",
+         "No. Reinstatement and fund release are separate outcomes. Even when an account is not restored, there is usually a defined route and timeline for releasing the remaining balance."),
+        ("Why does {name} not explain the reason in detail?",
+         "Financial providers are often restricted in what they can disclose about risk and compliance decisions. We work from what they have asked for and from your transaction history."),
+        ("Someone offered to release my {name} funds for a fee. Is that legitimate?",
+         "Treat it as a likely scam. Only {name} can release funds. Fee-first recovery offers and people claiming inside contacts are common frauds aimed at people with held balances."),
+    ],
+    "social": [
+        ("My {name} account was hacked and then suspended. Can it be recovered?",
+         "Compromise followed by abuse is one of the most common and most recoverable situations. The key is using the hacked account route first and showing evidence of the takeover."),
+        ("Should I create a new {name} account while I wait?",
+         "No. Creating a new account during a suspension is usually treated as evasion and can end the original case. It also puts any business assets linked to you at risk."),
+        ("Does paying for verification or a subscription restore a suspended {name} account?",
+         "No. Paid features can give access to support channels, which sometimes helps with recovery, but they do not overturn a policy decision by themselves."),
+    ],
+    "ads": [
+        ("Will my {name} ads or earnings resume immediately after reinstatement?",
+         "Often, but not always. Campaigns, feeds or ad serving may need to be re-enabled and re-reviewed. Earnings linked to invalid activity can remain withheld."),
+        ("Why should I fix my website before appealing to {name}?",
+         "Reviewers check what they can see: landing pages, business details, policies and traffic. An appeal that describes fixes not yet live is one of the most common reasons for rejection."),
+        ("Can an agency or another user's history affect my {name} account?",
+         "Yes. Shared users, payment methods and domains can link accounts. Suspensions for circumventing systems often come from those links rather than your own ads."),
+    ],
+    "content": [
+        ("How many appeals do I get on {name}?",
+         "Appeals are limited on most content platforms, often to one per decision. That is the reason to prepare the first submission properly rather than quickly."),
+        ("Can context save content that {name} removed?",
+         "Sometimes. Platforms allow some content with educational, documentary, scientific or artistic context. The appeal must explain that context specifically, with timestamps where relevant."),
+        ("What happens to my {name} content if the account is not restored?",
+         "It usually remains unavailable. Keep your own copies of master files and licenses regardless of platform."),
+    ],
+    "gig": [
+        ("Can I dispute a background check that led to a {name} deactivation?",
+         "Yes. Under the Fair Credit Reporting Act you can get a copy of a consumer report used against you and dispute inaccurate information with the screening company. A corrected report is strong appeal evidence."),
+        ("What evidence helps most in a {name} deactivation appeal?",
+         "Records created at the time: trip or order history, timestamps, delivery photos, GPS data and message logs. They let the reviewer follow what actually happened."),
+        ("Do local laws affect {name} deactivations?",
+         "They can. Some cities and states give app-based workers specific deactivation rights. Local driver organizations and legal aid groups can advise on how they apply where you work."),
+    ],
+    "email": [
+        ("What should I do first if my {name} account is disabled?",
+         "Sign in and follow the recovery or restore option shown, then list every service that uses this email for sign-in or password resets so you can secure them."),
+        ("Can I download my data from a disabled {name} account?",
+         "Sometimes. Check the options shown when you sign in. If download is offered, take it before doing anything else."),
+        ("Will changing my password restore a locked {name} account?",
+         "Only for security locks. Accounts disabled for policy reasons need the provider's appeal or restore route."),
+    ],
+}
 
 P = []
 

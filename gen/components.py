@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import config as C
-from templates import Ctx, breadcrumbs, e, icon
+from templates import Ctx, breadcrumbs, e, icon, plogo
 
 TRUST = ["Independent: not affiliated with any platform", "Confidential from the first message", "Honest about the odds"]
 
@@ -16,11 +16,13 @@ def btn(ctx: Ctx, label: str, href: str, kind: str = "primary", extra: str = "")
 
 
 def page_hero(ctx: Ctx, trail, pill: str, h1: str, lede: str, ctas: list[tuple[str, str, str]] | None = None,
-              trust: bool = True) -> str:
+              trust: bool = True, pid: str = "") -> str:
     cta_html = ""
     if ctas:
         cta_html = '<div class="ctas">' + "".join(btn(ctx, l, h, k) for l, h, k in ctas) + "</div>"
     pill_html = f'<span class="pill">{e(pill)}</span>' if pill else ""
+    if pid:
+        pill_html = f'<div class="hero-brand">{plogo(ctx, pid, "pl-lg")}{pill_html}</div>'
     return (f'<section class="phero"><div class="wrap">{breadcrumbs(ctx, trail)}{pill_html}'
             f'<h1>{e(h1)}</h1><p class="lede">{e(lede)}</p>{cta_html}{trust_line() if trust else ""}</div></section>')
 
@@ -39,9 +41,11 @@ def section(inner: str, *, title: str = "", eyebrow: str = "", intro: str = "", 
     return f'<section class="sec {cls}"{idattr}><div class="wrap">{head}{inner}</div></section>'
 
 
-def card(ctx: Ctx, href: str, title: str, text: str, tag: str = "", ic: str = "", extra_attrs: str = "") -> str:
+def card(ctx: Ctx, href: str, title: str, text: str, tag: str = "", ic: str = "", extra_attrs: str = "", pid: str = "") -> str:
     tag_html = f'<span class="tag">{e(tag)}</span>' if tag else ""
     ic_html = f'<span class="card-ic">{icon(ic)}</span>' if ic else ""
+    if pid:
+        ic_html = plogo(ctx, pid, "pl-md")
     return (f'<a class="card reveal" href="{ctx.link(href)}"{extra_attrs}>{ic_html}{tag_html}<h3>{e(title)}</h3>'
             f'<p>{e(text)}</p><span class="more">Read more {icon("arrow", "ic sm")}</span></a>')
 

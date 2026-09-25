@@ -70,6 +70,11 @@ _IC = {
 }
 
 
+def plogo(ctx: "Ctx", pid: str, cls: str = "pl") -> str:
+    """Platform logo tile (decorative: the platform name is always next to it)."""
+    return f'<img class="{cls}" src="{ctx.asset("img/logos/" + pid + ".svg")}" alt="" width="20" height="20" loading="lazy">'
+
+
 def icon(name: str, cls: str = "ic") -> str:
     return (f'<svg class="{cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
             f'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
@@ -87,8 +92,8 @@ def menus() -> list[dict]:
         col = []
         for cid in group:
             c = CATEGORIES[cid]
-            col.append({"head": c["name"], "href": c["path"],
-                        "items": [(p["name"], p["path"]) for p in _cat_platforms(cid)]})
+            col.append({"head": c["name"], "href": c["path"], "icon": c["icon"],
+                        "items": [(p["name"], p["path"], p["id"]) for p in _cat_platforms(cid)]})
         plat_cols.append(col)
     return [
         {
@@ -132,8 +137,8 @@ def _mega(ctx: Ctx, m: dict) -> str:
         for col in m["cols"]:
             blocks = []
             for g in col:
-                lis = "".join(f'<li><a href="{ctx.link(h)}">{e(n)}</a></li>' for n, h in g["items"])
-                blocks.append(f'<p class="mega-head"><a href="{ctx.link(g["href"])}">{e(g["head"])}</a></p><ul class="plist">{lis}</ul>')
+                lis = "".join(f'<li><a href="{ctx.link(h)}">{plogo(ctx, pid)}<span>{e(n)}</span></a></li>' for n, h, pid in g["items"])
+                blocks.append(f'<p class="mega-head"><a href="{ctx.link(g["href"])}">{icon(g["icon"], "ic xs")}{e(g["head"])}</a></p><ul class="plist">{lis}</ul>')
             cols.append(f'<div class="mega-col">{"".join(blocks)}</div>')
         body = f'<div class="mega-cols c4">{"".join(cols)}</div>'
     else:
@@ -170,29 +175,33 @@ def nav_html(ctx: Ctx) -> str:
     desk = "".join(
         f'<li class="has-mega"><a class="menu-btn" href="{ctx.link(m["href"])}">{e(m["label"])}'
         f'{icon("chev", "ic xs")}</a>{_mega(ctx, m)}</li>' for m in ms)
-    desk += f'<li><a class="menu-btn" href="{ctx.link("/services/held-funds-payouts/")}">Held funds</a></li>'
-    desk += f'<li><a class="menu-btn" href="{ctx.link("/about-us/")}">About</a></li>'
+    desk += f'<li><a class="menu-btn" href="{ctx.link("/services/held-funds-payouts/")}">{icon("card", "ic sm")}Held funds</a></li>'
+    desk += f'<li><a class="menu-btn" href="{ctx.link("/about-us/")}">{icon("users", "ic sm")}About</a></li>'
 
     # mobile accordions
     mob = []
     for m in ms:
         if m["kind"] == "platforms":
             inner = "".join(
-                f'<p class="m-head"><a href="{ctx.link(g["href"])}">{e(g["head"])}</a></p><ul>'
-                + "".join(f'<li><a href="{ctx.link(h)}">{e(n)}</a></li>' for n, h in g["items"]) + "</ul>"
+                f'<p class="m-head"><a href="{ctx.link(g["href"])}">{icon(g["icon"], "ic xs")}{e(g["head"])}</a></p><ul>'
+                + "".join(f'<li><a href="{ctx.link(h)}">{plogo(ctx, pid)}<span>{e(n)}</span></a></li>' for n, h, pid in g["items"]) + "</ul>"
                 for col in m["cols"] for g in col)
         else:
-            inner = "<ul>" + "".join(f'<li><a href="{ctx.link(h)}">{e(n)}</a></li>' for n, h, _, _ in m["items"]) + "</ul>"
+            inner = "<ul>" + "".join(f'<li><a href="{ctx.link(h)}"><span class="m-ic">{icon(ic, "ic sm")}</span><span>{e(n)}</span></a></li>' for n, h, _, ic in m["items"]) + "</ul>"
         mob.append(f'<details class="m-acc"><summary>{e(m["label"])}{icon("chev", "ic xs")}</summary><div class="m-body">{inner}</div></details>')
     mob_html = (
         '<div class="mnav" id="mnav"><div class="mnav-in">' + "".join(mob) +
         '<ul class="m-solo">'
-        f'<li><a href="{ctx.link("/services/")}">All platforms and services</a></li>'
-        f'<li><a href="{ctx.link("/services/held-funds-payouts/")}">Held funds and payouts</a></li>'
-        f'<li><a class="m-alert" href="{ctx.link("/services/priority-case-review/")}">Priority case review</a></li>'
-        f'<li><a href="{ctx.link("/pricing/")}">Pricing</a></li>'
-        f'<li><a href="{ctx.link("/about-us/")}">About us</a></li>'
-        f'<li><a href="{ctx.link("/contact-us/")}">Contact us</a></li>'
+        + "".join(
+            f'<li><a{" class=" + chr(34) + cls + chr(34) if cls else ""} href="{ctx.link(h)}"><span class="m-ic">{icon(ic, "ic sm")}</span><span>{e(n)}</span></a></li>'
+            for n, h, ic, cls in (
+                ("All platforms and services", "/services/", "globe", ""),
+                ("Held funds and payouts", "/services/held-funds-payouts/", "card", ""),
+                ("Priority case review", "/services/priority-case-review/", "clock", "m-alert"),
+                ("Pricing", "/pricing/", "file", ""),
+                ("About us", "/about-us/", "users", ""),
+                ("Contact us", "/contact-us/", "mail", ""),
+            )) +
         '</ul>'
         '<p class="m-note">Independent case preparation. Not affiliated with any platform.</p>'
         f'<a class="btn btn-light block" href="{ctx.link("/tools/reinstatement-readiness-score/")}">Free Readiness Score</a>'
@@ -251,6 +260,10 @@ def footer_html(ctx: Ctx) -> str:
         + col("Services", svc_links)
         + col("Company", co_links)
         + '</div>'
+        '<div class="f-tm"><p class="f-h">Trademark and endorsement disclaimer</p>'
+        '<p>Platform names, logos and trademarks shown on this site, including Amazon, eBay, Walmart, Etsy, Shopify, PayPal, Stripe, Meta, Facebook, Instagram, Google, YouTube, TikTok, X, Reddit, Discord, Microsoft, Uber, DoorDash, Airbnb and Booking.com, are the property of their respective owners. '
+        f'They are used for identification and information purposes only. {e(C.BRAND)} is an independent service and is not a partner of, affiliated with, sponsored by or endorsed by any of these companies. '
+        f'Use of a name or logo does not imply any relationship. <a href="{ctx.link("/disclaimer/")}">Read the full disclaimer</a>.</p></div>'
         f'<div class="f-legal"><p>&copy; <span data-year>{C.TODAY.year}</span> {e(holder)}. {reg}</p>'
         '<ul>'
         f'<li><a href="{ctx.link("/privacy-policy/")}">Privacy</a></li>'

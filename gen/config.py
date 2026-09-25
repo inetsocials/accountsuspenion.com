@@ -38,6 +38,21 @@ TODAY_US = TODAY.strftime("%m/%d/%Y")
 TEAM: list[dict] = []
 CASE_STUDIES: list[dict] = []
 TESTIMONIALS: list[dict] = []
+# Add ONLY genuine client reviews with written consent on file. The FTC rule on
+# fake reviews and testimonials (16 CFR Part 465) prohibits invented or
+# misattributed reviews. The build fails if a required field is missing.
+# Example entry (do not uncomment with invented data):
+# {
+#     "name": "Maria G.",                # as the client agreed to be named
+#     "role": "Marketplace seller",       # optional
+#     "platform": "amazon",               # platform id from content_platforms.py, optional
+#     "service": "plan-of-action",        # service id from content_services.py, optional
+#     "rating": 5,                        # 1 to 5, as the client gave it
+#     "text": "Exact words the client wrote.",
+#     "date": "2026-08-14",
+#     "consent_ref": "Consent form AS-1A2B3C4D, 08/14/2026",  # internal proof, never rendered
+# },
+# Once five or more are present, pages show the true average rating computed from them.
 
 
 def email() -> str:
