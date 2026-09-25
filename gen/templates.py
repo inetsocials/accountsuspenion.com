@@ -207,8 +207,8 @@ def nav_html(ctx: Ctx) -> str:
             )) +
         '</ul>'
         '<p class="m-note">Independent case preparation. Not affiliated with any platform.</p>'
-        f'<a class="btn btn-light block" href="{ctx.link("/tools/reinstatement-readiness-score/")}">Free Readiness Score</a>'
-        f'<a class="btn btn-primary block" href="{ctx.link("/contact-us/")}">Start a confidential case</a>'
+        f'<a class="btn btn-light btn-block" href="{ctx.link("/tools/reinstatement-readiness-score/")}">Free Readiness Score</a>'
+        f'<a class="btn btn-primary btn-block" href="{ctx.link("/contact-us/")}">Start a confidential case</a>'
         '</div></div>'
     )
     return (

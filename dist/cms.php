@@ -169,7 +169,7 @@ function render_post(array $post, string $site): never
         . ($post['excerpt'] ? '<p class="answer"><strong>Short answer.</strong> ' . $e($post['excerpt']) . '</p>' : '')
         . Markdown::toHtml((string) $post['body'])
         . '</article><aside class="side"><div class="side-card">' . $side
-        . '<a class="btn btn-primary block" href="/contact-us/?source=guide">Start a confidential case</a><p class="small">Updated ' . $e($updated) . '</p></div></aside></div></section>'
+        . '<a class="btn btn-primary btn-block" href="/contact-us/?source=guide">Start a confidential case</a><p class="small">Updated ' . $e($updated) . '</p></div></aside></div></section>'
         . '<section class="cta-band"><div class="wrap cta-in"><div><h2>Start with the notice.</h2><p>Send us what the platform sent you. We reply in writing with what we see, what we would do, and whether we think the case is worth pursuing.</p></div>'
         . '<div class="ctas"><a class="btn btn-primary" href="/contact-us/?source=guide">Start a confidential case</a><a class="btn btn-ghost" href="/tools/reinstatement-readiness-score/">Get your Readiness Score</a></div></div></section>';
 

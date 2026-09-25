@@ -288,7 +288,7 @@ def build_platform(p: dict) -> None:
              f'<dt>Route</dt><dd>Official {e(name)} appeal or review channel, submitted from your account</dd>'
              f'<dt>First response</dt><dd>Case review {e(C.REVIEW_WINDOW)}</dd>'
              f'<dt>Fees</dt><dd>Fixed scope confirmed in writing before work starts</dd></dl>'
-             f'{btn(ctx, "Start a " + name + " case", "/contact-us/?source=platform&platform=" + p["id"], "primary", "block")}'
+             f'{btn(ctx, "Start a " + name + " case", "/contact-us/?source=platform&platform=" + p["id"], "primary", "btn-block")}'
              f'<p class="side-alert">{icon("clock", "ic sm")}<span>Deadline in your notice? <a href="{ctx.link("/services/priority-case-review/")}">Request priority review</a>.</span></p>'
              '</div></aside>')
 
@@ -342,7 +342,7 @@ def build_service(s: dict) -> None:
              f'<dt>Stage</dt><dd>{e(stage["name"])}</dd>'
              f'<dt>First response</dt><dd>{e(C.REVIEW_WINDOW if s["id"] != "priority" else C.PRIORITY_WINDOW)}</dd>'
              f'<dt>Fees</dt><dd>Fixed scope confirmed in writing before work starts</dd></dl>'
-             f'{btn(ctx, "Start a confidential case", "/contact-us/?source=service&service=" + s["id"], "primary", "block")}</div></aside>')
+             f'{btn(ctx, "Start a confidential case", "/contact-us/?source=service&service=" + s["id"], "primary", "btn-block")}</div></aside>')
     blocks = (
         f'<div class="block"><h2 id="fit">Who it is for</h2><div class="cc"><div><h3>A good fit</h3>{ticks(s["for"])}</div>'
         f'<div><h3>Not a fit</h3>{ticks(s["not_for"], "crosses")}</div></div></div>'
@@ -399,7 +399,7 @@ def build_blog() -> None:
         plats = [BY_ID[x] for x in g["platforms"] if x in BY_ID]
         plat_links = "".join(f'<li><a href="{gctx.link(p["path"])}">{e(p["h1"])}</a></li>' for p in plats)
         aside = (f'<aside class="side"><div class="side-card"><p class="f-h">Platforms in this guide</p><ul class="side-list">{plat_links}</ul>'
-                 f'{btn(gctx, "Start a confidential case", "/contact-us/?source=guide", "primary", "block")}'
+                 f'{btn(gctx, "Start a confidential case", "/contact-us/?source=guide", "primary", "btn-block")}'
                  f'<p class="small">Updated {C.TODAY_US}</p></div></aside>')
         article = (f'<article class="main prose-wrap"><p class="answer"><strong>Short answer.</strong> {e(g["answer"])}</p>{secs}{how}'
                    f'<h2>FAQs</h2>{faq_html(g["faqs"])}{sources_html(g["sources"])}</article>')
@@ -974,6 +974,7 @@ BANNED = [
     (re.compile(r"\bguaranteed (reinstatement|results|approval)\b", re.I), "guarantee claim"),
     (re.compile(r"\b(lorem ipsum|TBD|TODO|FIXME)\b"), "placeholder"),
     (re.compile(r"\{\{|\}\}"), "template leak"),
+    (re.compile(r'class="btn(?: [\w-]+)* block(?: [\w-]+)*"'), "button uses layout class 'block' (use btn-block)"),
 ]
 
 
