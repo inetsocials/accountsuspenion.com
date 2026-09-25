@@ -59,6 +59,12 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Website fixes: long buttons could overflow phones (Gmail, Merchant Center pages); 24 px tap targets everywhere; footer contrast; touch-tablet mega menus open on first tap; local file:// preview links work; Client login and Check a case links; thank-you status link
 - CRM contrast fixes (green and neutral badges, calendar adjacent-month days)
 
+## v2.1 fixes (09/25/2026)
+- Legacy /page.html URLs: 301 to /page/ matched on THE_REQUEST only (first version looped on LiteSpeed); index.html redirects removed
+- Reports crashed on MySQL: alias `leading` is a MySQL reserved word; renamed to lead_count
+- E2E suite now runs on MySQL/MariaDB too (AS_DB=mysql): 151/151; SQLite 151/151
+- Deploy layout confirmed: public_html + ascrm side by side
+
 ## Completed Work
 - Live site inspection via search index (direct fetch blocked by sandbox egress): URL map reconstructed
 - gen/ generator, static/ assets, api/contact.php, server-tools/read_cases.php, qa/qa_matrix.py
@@ -95,7 +101,6 @@ Third-party services: Google Fonts; optional Cloudflare Turnstile
 - Secrets referenced only as {{APP_KEY}}, {{IP_SALT}} placeholders
 
 ## Open Questions
-- MySQL path verified only by code review in this environment (tests run on SQLite, as in the original spec)
 - sodium_compat fallback from spec v1.1 was not in the supplied v1.0 zip; sodium extension required
 - Full list of current blog post URLs
 - Legal entity, jurisdiction and registration details

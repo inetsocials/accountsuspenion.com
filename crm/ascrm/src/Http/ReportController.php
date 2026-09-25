@@ -68,10 +68,10 @@ final class ReportController extends Controller
         $median = $hours ? $hours[intdiv(count($hours), 2)] : null;
         $workload = Db::all(
             "SELECT us.id, us.name, us.role,
-               (SELECT COUNT(*) FROM cases c WHERE c.lead_user_id = us.id AND c.status IN ('qualified','nda','active','monitoring')) AS leading,
+               (SELECT COUNT(*) FROM cases c WHERE c.lead_user_id = us.id AND c.status IN ('qualified','nda','active','monitoring')) AS lead_count,
                (SELECT COUNT(*) FROM tasks t WHERE t.assignee_id = us.id AND t.status = 'open') AS open_tasks,
                (SELECT COUNT(*) FROM tasks t WHERE t.assignee_id = us.id AND t.status = 'open' AND t.due_on < ?) AS overdue
-             FROM users us WHERE us.role IN ('master','admin','lead','staff') AND us.status = 'active' ORDER BY leading DESC, us.name",
+             FROM users us WHERE us.role IN ('master','admin','lead','staff') AND us.status = 'active' ORDER BY lead_count DESC, us.name",
             [today()]
         );
         return [

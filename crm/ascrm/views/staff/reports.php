@@ -53,7 +53,7 @@ foreach ($targets as $t) { $totW += $t['won']; $totL += $t['lost']; }
   <div class="card span-2">
     <div class="card-h"><h2>Team workload</h2></div>
     <div class="table-wrap"><table class="table table-stack"><thead><tr><th>Name</th><th>Role</th><th class="right">Leading</th><th class="right">Open tasks</th><th class="right">Overdue</th></tr></thead><tbody>
-      <?php foreach ($workload as $w): ?><tr><td data-l="Name"><?= h($w['name']) ?></td><td data-l="Role"><?= h(Labels::ROLES[$w['role']]) ?></td><td data-l="Leading" class="right num"><?= (int) $w['leading'] ?></td><td data-l="Open tasks" class="right num"><?= (int) $w['open_tasks'] ?></td><td data-l="Overdue" class="right num <?= $w['overdue'] ? 'text-danger' : '' ?>"><?= (int) $w['overdue'] ?></td></tr><?php endforeach; ?>
+      <?php foreach ($workload as $w): ?><tr><td data-l="Name"><?= h($w['name']) ?></td><td data-l="Role"><?= h(Labels::ROLES[$w['role']]) ?></td><td data-l="Leading" class="right num"><?= (int) $w['lead_count'] ?></td><td data-l="Open tasks" class="right num"><?= (int) $w['open_tasks'] ?></td><td data-l="Overdue" class="right num <?= $w['overdue'] ? 'text-danger' : '' ?>"><?= (int) $w['overdue'] ?></td></tr><?php endforeach; ?>
     </tbody></table></div>
   </div>
   <?php endif; ?>

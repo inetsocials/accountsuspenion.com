@@ -70,12 +70,62 @@ def fresh_code(who: str, secret: str) -> str:
         time.sleep(1)
 
 
+# AS_DB=mysql runs the whole suite on MySQL/MariaDB (AS_DB_NAME, AS_DB_USER, AS_DB_PASS; default astest/as/aspw).
+MYSQL = os.environ.get("AS_DB") == "mysql"
+MY = {"name": os.environ.get("AS_DB_NAME", "astest"), "user": os.environ.get("AS_DB_USER", "as"), "pass": os.environ.get("AS_DB_PASS", "aspw")}
+
+
+def _pdo(dbname: str | None = None) -> str:
+    if MYSQL:
+        return "new PDO(%s, %s, %s)" % (json.dumps("mysql:host=localhost;dbname=%s;charset=utf8mb4" % (dbname or MY["name"])), json.dumps(MY["user"]), json.dumps(MY["pass"]))
+    return "new PDO(%s)" % json.dumps("sqlite:%s" % (dbname or DB))
+
+
 def php_sql(sql: str) -> None:
     """Writes go through PHP/PDO so they share SQLite's WAL correctly with the server."""
-    subprocess.run(["php", "-r", "$p = new PDO('sqlite:%s'); $p->exec(%s);" % (DB, json.dumps(sql))], check=True)
+    subprocess.run(["php", "-r", "$p = %s; $p->exec(%s);" % (_pdo(), json.dumps(sql))], check=True)
+
+
+class _Row(dict):
+    def __getitem__(self, k):
+        return list(self.values())[k] if isinstance(k, int) else dict.__getitem__(self, k)
+
+
+class _Result:
+    def __init__(self, rows: list) -> None:
+        self.rows = [_Row(r) for r in rows]
+
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
+
+    def fetchall(self) -> list:
+        return self.rows
+
+
+class _PdoConn:
+    """sqlite3-like read helper backed by PHP PDO (used for MySQL runs)."""
+
+    def __init__(self, dbname: str | None = None) -> None:
+        self.dbname = dbname
+
+    def execute(self, sql: str, params: tuple = ()) -> _Result:
+        code = ("$p = %s; $p->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); $s = $p->prepare(%s); $s->execute(json_decode(%s, true)); "
+                "echo json_encode($s->fetchAll(PDO::FETCH_ASSOC));") % (_pdo(self.dbname), json.dumps(sql), json.dumps(json.dumps(list(params))))
+        out = subprocess.run(["php", "-r", code], capture_output=True, text=True, check=True).stdout
+        rows = json.loads(out)
+        for r in rows:  # PDO MySQL returns numbers as strings
+            for k, v in r.items():
+                if isinstance(v, str) and v.lstrip("-").isdigit() and len(v) < 19 and not (len(v) > 1 and v.startswith("0")):
+                    r[k] = int(v)
+        return _Result(rows)
+
+    def close(self) -> None:
+        pass
 
 
 def at_rest() -> bytes:
+    if MYSQL:
+        return subprocess.run(["mysqldump", "--skip-comments", MY["name"]], capture_output=True, check=True).stdout
     data = b""
     for suffix in ("", "-wal", "-shm"):
         f = Path(str(DB) + suffix)
@@ -88,6 +138,9 @@ class db:
     """Short-lived read-only connection, always closed (a lingering reader sees stale pages)."""
 
     def __enter__(self) -> sqlite3.Connection:
+        if MYSQL:
+            self.c = _PdoConn()
+            return self.c
         self.c = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
         self.c.row_factory = sqlite3.Row
         return self.c
@@ -168,7 +221,13 @@ def main() -> int:
         setup_key = (APP / "config" / "setup.key").read_text().strip()
         page.fill("input[name=setup_key]", setup_key)
         page.fill("input[name=app_url]", BASE + "/portal")
-        page.select_option("select[name=driver]", "sqlite")
+        if MYSQL:
+            page.select_option("select[name=driver]", "mysql")
+            page.fill("input[name=db_name]", MY["name"])
+            page.fill("input[name=db_user]", MY["user"])
+            page.fill("input[name=db_pass]", MY["pass"])
+        else:
+            page.select_option("select[name=driver]", "sqlite")
         page.fill("input[name=name]", "Morgan Master")
         page.fill("input[name=email]", "master@accountsuspension.test")
         page.fill("input[name=password]", PW)
@@ -654,20 +713,26 @@ def extra_tests() -> None:
     fresh = ENV / "ascrm-restore"
     shutil.rmtree(fresh, ignore_errors=True)
     shutil.copytree(APP, fresh, ignore=shutil.ignore_patterns("*.sqlite*", "vault", "backups", "mail", "logs"))
+    if MYSQL:
+        subprocess.run(["mysql", "-e", "DROP DATABASE IF EXISTS %s_restore; CREATE DATABASE %s_restore; GRANT ALL ON %s_restore.* TO '%s'@'localhost';" % (MY["name"], MY["name"], MY["name"], MY["user"])], check=True)
     code = ("$f = '%s/config/config.php'; $c = require $f; $c['db']['path'] = '%s/storage/db/restore.sqlite'; "
-            "$c['master_key_path'] = '%s/keys/master.key'; $c['vault_path'] = '%s/storage/vault'; "
+            + ("$c['db']['name'] .= '_restore'; " if MYSQL else "")
+            + "$c['master_key_path'] = '%s/keys/master.key'; $c['vault_path'] = '%s/storage/vault'; "
             "file_put_contents($f, \"<?php\\nreturn \" . var_export($c, true) . \";\\n\");") % (fresh, fresh, fresh, fresh)
     subprocess.run(["php", "-r", code], check=True)
     out = subprocess.run(["php", str(fresh / "cli" / "tool.php"), "backup:restore", str(backup)], capture_output=True, text=True)
     ok(out.returncode == 0, "backup restores into a fresh install" + ("" if out.returncode == 0 else ": " + out.stdout + out.stderr))
-    def counts(path: Path) -> dict:
-        con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    def counts(path) -> dict:
+        con = _PdoConn(path) if MYSQL else sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         try:
             return {t: con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("users", "clients", "cases", "messages", "documents", "targets", "funds", "invoices", "payments")}
         finally:
             con.close()
-    restored = fresh / "storage" / "db" / "restore.sqlite"
-    ok(restored.exists() and counts(restored) == counts(DB), "restored row counts match")
+    if MYSQL:
+        ok(counts(MY["name"] + "_restore") == counts(MY["name"]), "restored row counts match")
+    else:
+        restored = fresh / "storage" / "db" / "restore.sqlite"
+        ok(restored.exists() and counts(restored) == counts(DB), "restored row counts match")
     cctx.close()
     g.update(lead_id=lead_id, client_id=client_id)
     cms_tests(page, browser, ref1, ref2)

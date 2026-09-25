@@ -42,6 +42,8 @@ export PW_CHROMIUM=/path/to/chrome            # optional: a preinstalled Chromiu
 
 # CRM + portal + CMS + website intake, end to end (fresh install each run)
 qa/run_crm_e2e.sh /tmp/as-env 8091
+# same suite on MySQL/MariaDB (database astest, user as/aspw by default)
+AS_DB=mysql qa/run_crm_e2e.sh /tmp/as-env-my 8093
 
 # Website: every page, link and button at 1440 and 390 px, plus axe-core accessibility
 php -S 127.0.0.1:8092 -t /tmp/as-env/public_html qa/router.php &
