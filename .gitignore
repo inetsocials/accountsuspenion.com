@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+qa/screens/
+dist/api/config.php
+static/api/config.php
+.DS_Store

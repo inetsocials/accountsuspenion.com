@@ -1,0 +1,5 @@
+# old_path,new_path   (one per line; build writes them into .htaccess as 301s)
+# Add every URL from the current WordPress sitemaps that is not rebuilt with the same slug.
+# Export: https://accountsuspension.com/sitemap_index.xml (Yoast/RankMath) -> post-sitemap.xml, page-sitemap.xml
+# Example:
+# /how-to-appeal-amazon-suspension/,/blog/how-to-write-an-amazon-plan-of-action/
